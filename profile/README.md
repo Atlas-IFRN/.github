@@ -23,7 +23,7 @@ Desenvolvida para o **IFRN Campus Pau dos Ferros** como Projeto Integrador de Si
 | [`atlas-auth-service`](../atlas-auth-service) | Autenticação OAuth2 com SUAP, geração e validação de JWT | Django |
 | [`atlas-tracks-service`](../atlas-tracks-service) | Trilhas de conhecimento, módulos, desafios e progresso | Django |
 | [`atlas-scholarship-service`](../atlas-scholarship-service) | Bolsas, candidaturas, talentos e pontuação | Django |
-| [`atlas-ai-service`](../atlas-ai-service) | Análise de repositórios GitHub via LLM | Python |
+| [`atlas-ai-service`](../atlas-ai-service) | Análise de repositórios GitHub via LLM | FastAPI |
 | [`atlas-frontend-service`](../atlas-frontend-service) | SPA para alunos e professores | React + TypeScript |
 
 ---
