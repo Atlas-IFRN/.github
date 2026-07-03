@@ -38,11 +38,11 @@ Containers Docker orquestrados pelo [`atlas-infra`](../atlas-infra). O **Nginx**
 Internet :80/:443
       │
       ▼
-   ┌─────────┐   /api/auth/    → auth-service:8000
-   │  Nginx  │   /api/tracks/  → tracks-service:8000
-   │ gateway │   /api/bolsas/  → scholarship-service:8000
-   └─────────┘   /api/ia/      → ai-service:8003
-      │           /            → frontend:80
+   ┌─────────┐   /api/auth/        → auth-service:8000
+   │  Nginx  │   /api/track/       → tracks-service:8000
+   │ gateway │   /api/scholarship/ → scholarship-service:8000
+   └─────────┘   /api/ai/          → ai-service:8003
+      │           /                → frontend:80
       └── repassa Authorization adiante
 ```
 
