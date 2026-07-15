@@ -18,8 +18,6 @@ Desenvolvida para o **IFRN Campus Pau dos Ferros** como Projeto Integrador de Si
 
 ## Repositórios
 
-## Repositórios
-
 | Repositório                                                   | Descrição                                                                                   | Stack                | Documentação                                                          |
 | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | -------------------- | --------------------------------------------------------------------- |
 | [`atlas-infra`](../atlas-infra)                               | Orquestração: Docker Compose, Nginx (gateway), PostgreSQL, Redis, RabbitMQ, deploy e backup | Docker · Nginx       | [Wiki](https://github.com/Atlas-IFRN/atlas-infra/wiki)                |
