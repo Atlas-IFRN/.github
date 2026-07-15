@@ -12,54 +12,68 @@ Desenvolvida para o **IFRN Campus Pau dos Ferros** como Projeto Integrador de Si
 ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat&logo=typescript&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=flat&logo=postgresql&logoColor=white)
+![RabbitMQ](https://img.shields.io/badge/RabbitMQ-FF6600?style=flat&logo=rabbitmq&logoColor=white)
 
 </div>
 
 ---
 
+## Visão geral
+
+O Atlas é uma plataforma de microsserviços onde **alunos** percorrem trilhas de conhecimento, resolvem desafios de código avaliados por IA e se candidatam a bolsas, enquanto **professores** gerenciam trilhas, publicam vagas e avaliam talentos. Tudo é orquestrado em containers Docker, com o **Nginx** como único ponto de entrada externo.
+
 ## Repositórios
 
 | Repositório | Descrição | Stack |
 |---|---|---|
-| [`atlas-infra`](../atlas-infra) | Orquestração: Docker Compose, Nginx, scripts de deploy e backup | Docker · Nginx |
-| [`atlas-auth-service`](../atlas-auth-service) | Autenticação OAuth2 com SUAP, JWT e perfil via gRPC | Django |
-| [`atlas-track-service`](../atlas-track-service) | Trilhas de conhecimento, módulos, desafios e progresso | Django · Celery |
-| [`atlas-scholarship-service`](../atlas-scholarship-service) | Bolsas, candidaturas, talentos e pontuação | Django |
-| [`atlas-ai-service`](../atlas-ai-service) | Análise de repositórios GitHub via LLM local (Ollama) | FastAPI |
+| [`atlas-infra`](../atlas-infra) | Orquestração: Docker Compose, Nginx (gateway), Postgres/Redis/RabbitMQ, deploy e backup | Docker · Nginx |
+| [`atlas-auth-service`](../atlas-auth-service) | Autenticação OAuth2 com SUAP, emissão/validação de JWT e perfis de usuário | Django |
+| [`atlas-track-service`](../atlas-track-service) | Trilhas, módulos, conteúdos, progresso e submissão de desafios | Django · Celery |
+| [`atlas-scholarship-service`](../atlas-scholarship-service) | Bolsas, candidaturas, banco de talentos e notas | Django · Celery |
+| [`atlas-feed-service`](../atlas-feed-service) | Feed institucional: posts, comentários, curtidas e banners | Django |
+| [`atlas-notification-service`](../atlas-notification-service) | Notificações — consumidor central via RabbitMQ | Django · Celery |
+| [`atlas-ai-service`](../atlas-ai-service) | Avaliação de repositórios GitHub via LLM local (Ollama) | FastAPI |
 | [`atlas-frontend`](../atlas-frontend) | SPA para alunos e professores | React · TypeScript |
+| [`atlas-observability`](../atlas-observability) | Métricas dos serviços | Prometheus · Grafana |
 
 ---
 
 ## Arquitetura
 
-Containers Docker orquestrados pelo [`atlas-infra`](../atlas-infra). O **Nginx** é o único ponto de entrada externo: roteia por prefixo de path. Os serviços Django escutam todos na porta `8000` interna e são distinguidos pelo nome do container na rede Docker.
+Containers Docker orquestrados pelo [`atlas-infra`](../atlas-infra). O **Nginx** é o único ponto de entrada externo e roteia por prefixo de path. Os serviços Django escutam na porta `8000` interna, distinguidos pelo nome do container na rede Docker.
 
 ```
 Internet :80/:443
       │
       ▼
-   ┌─────────┐   /api/auth/        → auth-service:8000
-   │  Nginx  │   /api/track/       → tracks-service:8000
-   │ gateway │   /api/scholarship/ → scholarship-service:8000
-   └─────────┘   /api/ai/          → ai-service:8003
-      │           /                → frontend:80
-      └── repassa Authorization adiante
+   ┌─────────┐   /api/auth/          → auth-service:8000
+   │  Nginx  │   /api/track/         → tracks-service:8000
+   │ gateway │   /api/scholarship/   → scholarship-service:8000
+   │ (auth_  │   /api/feed/          → feed-service:8000
+   │ request)│   /api/notifications/ → notification-service:8000
+   └─────────┘   /api/ai/            → ai-service:8003
+      │           /                  → frontend:80
+      ▼
+  valida o JWT na borda (→ auth-service/internal/validate/)
+  e injeta X-User-Id / X-User-Role
 ```
 
-- **Autenticação** — a validação do token JWT é feita via **gRPC** dentro de cada serviço, consultando `auth-service:50051`. O bloco `auth_request` no Nginx fica pré-configurado e comentado, para uso futuro como barreira na borda.
-- **Banco de dados** — PostgreSQL único com três schemas isolados (`auth`, `tracks`, `scholarship`). Cada serviço seleciona seu schema por conexão via `search_path` (variável `PGOPTIONS`). Nenhum serviço acessa o schema de outro diretamente — dados cruzados passam pela API.
-- **Mensageria** — RabbitMQ + Celery para tarefas de background (no momento, presente no serviço de trilhas).
-- **Cache** — Redis para dados voláteis (validações de token, sessões, rate limit).
-- **IA** — `ai-service` consome um LLM local servido pelo container **Ollama**.
+- **Autenticação** — o Nginx valida o JWT **na borda** via `auth_request` (chamando `auth-service/api/auth/internal/validate/`) e injeta `X-User-Id` / `X-User-Role`. Cada serviço **também** valida o token localmente de forma *stateless* (SimpleJWT), lendo os claims (`role`, `ira`, `is_staff`, ...) sem novas chamadas de rede. A chave de assinatura (`DJANGO_SECRET_KEY`) é compartilhada entre os serviços.
+- **Banco de dados** — PostgreSQL 16 único com cinco schemas isolados (`auth`, `tracks`, `scholarship`, `notification`, `feed`). Cada serviço seleciona seu schema por conexão via `search_path` (`PGOPTIONS`). Nenhum serviço acessa o schema de outro — dados cruzados passam pela API HTTP interna.
+- **Mensageria** — RabbitMQ + Celery para trabalho assíncrono. Auth, feed, tracks e scholarship **publicam** eventos (`notifications.create`); o **notification-service é o consumidor central**. O tracks também usa uma fila dedicada para a avaliação de desafios.
+- **IA** — o `ai-service` (FastAPI) avalia repositórios com um LLM local servido pelo container **Ollama**; é acionado de forma assíncrona pelo tracks quando um aluno submete um desafio.
+- **Cache** — Redis para dados voláteis (sessões, rate limit, cache).
+- **Observabilidade & auditoria** — cada serviço expõe `/metrics` (coletado pelo [`atlas-observability`](../atlas-observability)) e mantém um `AuditLog` com registro automático de operações. Backups do Postgres via `pg_dump` agendado no `atlas-infra`.
 
 ---
 
 ## Stack
 
-**Backend** — Python · Django REST Framework · FastAPI · httpx · gRPC  
-**Frontend** — React · TypeScript · Vite  
+**Backend** — Python · Django REST Framework · FastAPI · httpx / requests · Celery  
+**Frontend** — React · TypeScript · Vite · Material UI · TanStack Query  
 **Infra** — Docker · Nginx · PostgreSQL 16 · Redis 7 · RabbitMQ 3 · Ollama  
-**Auth** — OAuth2 com SUAP · JWT  
+**Auth** — OAuth2 com SUAP · JWT (SimpleJWT)  
+**Observabilidade** — Prometheus · Grafana · pg_stat_statements  
 **CI/CD** — GitHub Actions
 
 ---
@@ -71,17 +85,19 @@ Todo o ambiente é orquestrado pelo [`atlas-infra`](../atlas-infra). Os serviço
 ### 1. Estrutura de pastas
 
 ```
-atlas/
-├── docker-compose.yml          (do atlas-infra)
+atlas/                              (clone de atlas-infra)
+├── docker-compose.yml
 ├── docker-compose.dev.yml
 ├── .env
 ├── nginx/  postgres/  scripts/
-├── frontend/                   ← clone de atlas-frontend
+├── frontend/                       ← clone de atlas-frontend
 └── services/
-    ├── auth/                   ← clone de atlas-auth-service
-    ├── track/                  ← clone de atlas-track-service
-    ├── scholarship/            ← clone de atlas-scholarship-service
-    └── ai/                     ← clone de atlas-ai-service
+    ├── auth/                       ← clone de atlas-auth-service
+    ├── track/                      ← clone de atlas-track-service
+    ├── scholarship/                ← clone de atlas-scholarship-service
+    ├── feed/                       ← clone de atlas-feed-service
+    ├── notification/               ← clone de atlas-notification-service
+    └── ai/                         ← clone de atlas-ai-service
 ```
 
 ### 2. Clonar tudo
@@ -90,18 +106,22 @@ atlas/
 git clone https://github.com/Atlas-IFRN/atlas-infra atlas
 cd atlas
 
-git clone https://github.com/Atlas-IFRN/atlas-frontend            frontend
-git clone https://github.com/Atlas-IFRN/atlas-auth-service        services/auth
-git clone https://github.com/Atlas-IFRN/atlas-track-service       services/track
-git clone https://github.com/Atlas-IFRN/atlas-scholarship-service services/scholarship
-git clone https://github.com/Atlas-IFRN/atlas-ai-service          services/ai
+git clone https://github.com/Atlas-IFRN/atlas-frontend             frontend
+git clone https://github.com/Atlas-IFRN/atlas-auth-service         services/auth
+git clone https://github.com/Atlas-IFRN/atlas-track-service        services/track
+git clone https://github.com/Atlas-IFRN/atlas-scholarship-service  services/scholarship
+git clone https://github.com/Atlas-IFRN/atlas-feed-service         services/feed
+git clone https://github.com/Atlas-IFRN/atlas-notification-service services/notification
+git clone https://github.com/Atlas-IFRN/atlas-ai-service           services/ai
 ```
+
+> O `scripts/deploy.sh` do `atlas-infra` automatiza esse clone/atualização no servidor.
 
 ### 3. Configurar variáveis
 
 ```bash
 cp .env.example .env
-# edite .env: senhas do Postgres/RabbitMQ, credenciais do SUAP, secret key
+# edite .env: senhas do Postgres/RabbitMQ, credenciais do SUAP, DJANGO_SECRET_KEY compartilhada
 ```
 
 ### 4. Subir
@@ -110,7 +130,7 @@ cp .env.example .env
 docker compose up -d --build
 ```
 
-> O primeiro `up` demora: o container `ollama-pull` baixa o modelo LLM (~1 GB) e o `ai-service` aguarda o modelo ficar pronto antes de iniciar.
+> O primeiro `up` demora: o container `ollama-pull` baixa o modelo LLM e o `ai-service` aguarda o modelo ficar pronto antes de iniciar.
 
 A aplicação fica acessível em `http://localhost` (ou no domínio configurado).
 
@@ -122,7 +142,7 @@ Para rodar só a infraestrutura compartilhada (Postgres, Redis, RabbitMQ, Ollama
 docker compose -f docker-compose.dev.yml up -d
 ```
 
-Cada serviço Django roda com `python manage.py runserver` e o frontend com `npm run dev`, apontando para essa infra. Consulte o README de cada repositório.
+Cada serviço Django roda com `python manage.py runserver`, o `ai-service` com `uvicorn` e o frontend com `npm run dev`. Consulte o README de cada repositório.
 
 ---
 
@@ -130,7 +150,7 @@ Cada serviço Django roda com `python manage.py runserver` e o frontend com `npm
 
 | Persona | Descrição |
 |---|---|
-| **Aluno** | Consome trilhas de conhecimento, resolve desafios e se candidata a bolsas |
+| **Aluno** | Consome trilhas de conhecimento, resolve desafios avaliados por IA e se candidata a bolsas |
 | **Professor** | Gerencia trilhas, cria vagas e avalia talentos com apoio da IA |
 
 ---
