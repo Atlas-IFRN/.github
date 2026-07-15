@@ -14,6 +14,8 @@ Desenvolvida para o **IFRN Campus Pau dos Ferros** como Projeto Integrador de Si
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=flat&logo=postgresql&logoColor=white)
 ![RabbitMQ](https://img.shields.io/badge/RabbitMQ-FF6600?style=flat&logo=rabbitmq&logoColor=white)
 
+Link do Google com documentações: https://drive.google.com/drive/folders/1OSRP8jQa0lGyplzuRTnJEtueCM8dyVn8?usp=sharing
+
 </div>
 
 ## Repositórios
