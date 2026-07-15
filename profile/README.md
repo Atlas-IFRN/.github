@@ -18,18 +18,17 @@ Desenvolvida para o **IFRN Campus Pau dos Ferros** como Projeto Integrador de Si
 
 ## Repositórios
 
-| Repositório                                                   | Descrição                                                                                   | Stack                | Documentação                                                          |
-| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | -------------------- | --------------------------------------------------------------------- |
-| [`atlas-infra`](../atlas-infra)                               | Orquestração: Docker Compose, Nginx (gateway), PostgreSQL, Redis, RabbitMQ, deploy e backup | Docker · Nginx       | [Wiki](https://github.com/Atlas-IFRN/atlas-infra/wiki)                |
-| [`atlas-auth-service`](../atlas-auth-service)                 | Autenticação OAuth2 com SUAP, emissão e validação de JWT e perfis de usuário                | Django               | [Wiki](https://github.com/Atlas-IFRN/atlas-auth-service/wiki)         |
-| [`atlas-track-service`](../atlas-track-service)               | Trilhas, módulos, conteúdos, progresso e submissão de desafios                              | Django · Celery      | [Wiki](https://github.com/Atlas-IFRN/atlas-track-service/wiki)        |
-| [`atlas-scholarship-service`](../atlas-scholarship-service)   | Bolsas, candidaturas, banco de talentos e notas                                             | Django · Celery      | [Wiki](https://github.com/Atlas-IFRN/atlas-scholarship-service/wiki)  |
-| [`atlas-feed-service`](../atlas-feed-service)                 | Feed institucional: posts, comentários, curtidas e banners                                  | Django               | [Wiki](https://github.com/Atlas-IFRN/atlas-feed-service/wiki)         |
-| [`atlas-notification-service`](../atlas-notification-service) | Notificações — consumidor central via RabbitMQ                                              | Django · Celery      | [Wiki](https://github.com/Atlas-IFRN/atlas-notification-service/wiki) |
-| [`atlas-ai-service`](../atlas-ai-service)                     | Avaliação de repositórios GitHub via LLM local com Ollama                                   | FastAPI              | [Wiki](https://github.com/Atlas-IFRN/atlas-ai-service/wiki)           |
-| [`atlas-frontend`](../atlas-frontend)                         | SPA para alunos e professores                                                               | React · TypeScript   | [Wiki](https://github.com/Atlas-IFRN/atlas-frontend/wiki)             |
-| [`atlas-observability`](../atlas-observability)               | Coleta e visualização das métricas dos serviços                                             | Prometheus · Grafana | [Wiki](https://github.com/Atlas-IFRN/atlas-observability/wiki)        |
-                                                                 |
+| Repositório                                                                              | Descrição                                                                                   | Stack                | Documentação                                                          |
+| ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | -------------------- | --------------------------------------------------------------------- |
+| [`atlas-infra`](https://github.com/Atlas-IFRN/atlas-infra)                               | Orquestração: Docker Compose, Nginx (gateway), PostgreSQL, Redis, RabbitMQ, deploy e backup | Docker · Nginx       | [Wiki](https://github.com/Atlas-IFRN/atlas-infra/wiki)                |
+| [`atlas-auth-service`](https://github.com/Atlas-IFRN/atlas-auth-service)                 | Autenticação OAuth2 com SUAP, emissão e validação de JWT e perfis de usuário                | Django               | [Wiki](https://github.com/Atlas-IFRN/atlas-auth-service/wiki)         |
+| [`atlas-track-service`](https://github.com/Atlas-IFRN/atlas-track-service)               | Trilhas, módulos, conteúdos, progresso e submissão de desafios                              | Django · Celery      | [Wiki](https://github.com/Atlas-IFRN/atlas-track-service/wiki)        |
+| [`atlas-scholarship-service`](https://github.com/Atlas-IFRN/atlas-scholarship-service)   | Bolsas, candidaturas, banco de talentos e notas                                             | Django · Celery      | [Wiki](https://github.com/Atlas-IFRN/atlas-scholarship-service/wiki)  |
+| [`atlas-feed-service`](https://github.com/Atlas-IFRN/atlas-feed-service)                 | Feed institucional: posts, comentários, curtidas e banners                                  | Django               | [Wiki](https://github.com/Atlas-IFRN/atlas-feed-service/wiki)         |
+| [`atlas-notification-service`](https://github.com/Atlas-IFRN/atlas-notification-service) | Notificações — consumidor central via RabbitMQ                                              | Django · Celery      | [Wiki](https://github.com/Atlas-IFRN/atlas-notification-service/wiki) |
+| [`atlas-ai-service`](https://github.com/Atlas-IFRN/atlas-ai-service)                     | Avaliação de repositórios GitHub via LLM local com Ollama                                   | FastAPI              | [Wiki](https://github.com/Atlas-IFRN/atlas-ai-service/wiki)           |
+| [`atlas-frontend`](https://github.com/Atlas-IFRN/atlas-frontend)                         | SPA para alunos e professores                                                               | React · TypeScript   | [Wiki](https://github.com/Atlas-IFRN/atlas-frontend/wiki)             |
+| [`atlas-observability`](https://github.com/Atlas-IFRN/atlas-observability)               | Coleta e visualização das métricas dos serviços                                             | Prometheus · Grafana | [Wiki](https://github.com/Atlas-IFRN/atlas-observability/wiki)        |
 
 
 ---
@@ -37,20 +36,6 @@ Desenvolvida para o **IFRN Campus Pau dos Ferros** como Projeto Integrador de Si
 ## Visão geral
 
 O Atlas é uma plataforma de microsserviços onde **alunos** percorrem trilhas de conhecimento, resolvem desafios de código avaliados por IA e se candidatam a bolsas, enquanto **professores** gerenciam trilhas, publicam vagas e avaliam talentos. Tudo é orquestrado em containers Docker, com o **Nginx** como único ponto de entrada externo.
-
-## Repositórios
-
-| Repositório | Descrição | Stack |
-|---|---|---|
-| [`atlas-infra`](../atlas-infra) | Orquestração: Docker Compose, Nginx (gateway), Postgres/Redis/RabbitMQ, deploy e backup | Docker · Nginx |
-| [`atlas-auth-service`](../atlas-auth-service) | Autenticação OAuth2 com SUAP, emissão/validação de JWT e perfis de usuário | Django |
-| [`atlas-track-service`](../atlas-track-service) | Trilhas, módulos, conteúdos, progresso e submissão de desafios | Django · Celery |
-| [`atlas-scholarship-service`](../atlas-scholarship-service) | Bolsas, candidaturas, banco de talentos e notas | Django · Celery |
-| [`atlas-feed-service`](../atlas-feed-service) | Feed institucional: posts, comentários, curtidas e banners | Django |
-| [`atlas-notification-service`](../atlas-notification-service) | Notificações — consumidor central via RabbitMQ | Django · Celery |
-| [`atlas-ai-service`](../atlas-ai-service) | Avaliação de repositórios GitHub via LLM local (Ollama) | FastAPI |
-| [`atlas-frontend`](../atlas-frontend) | SPA para alunos e professores | React · TypeScript |
-| [`atlas-observability`](../atlas-observability) | Métricas dos serviços | Prometheus · Grafana |
 
 ---
 
